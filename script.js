@@ -1,109 +1,90 @@
-function calculateMinCost() {
-  const inputElement = document.getElementById('ropesInput');
-  const resultElement = document.getElementById('result');
-
-  // Get the input values and split them by commas
-  const inputValues = inputElement.value.split(',').map(Number);
-
-  // Create a min-heap to store the rope lengths
-  const minHeap = new MinHeap();
-
-  // Add all rope lengths to the min-heap
-  for (const length of inputValues) {
-    minHeap.insert(length);
+// This function calculates the minimum cost of connecting the given ropes.
+function connectRopes(ropes) {
+  // Create a priority queue to store the lengths of the ropes.
+  const priorityQueue = new PriorityQueue();
+  for (const rope of ropes) {
+    priorityQueue.enqueue(rope);
   }
 
+  // Initialize the total cost.
   let totalCost = 0;
 
-  // Merge the ropes until only one rope remains in the min-heap
-  while (minHeap.size() > 1) {
-    const firstRope = minHeap.extractMin();
-    const secondRope = minHeap.extractMin();
+  // While there are more than one rope in the queue, connect the two shortest ropes.
+  while (priorityQueue.size() > 1) {
+    const firstRope = priorityQueue.dequeue();
+    const secondRope = priorityQueue.dequeue();
 
     const cost = firstRope + secondRope;
     totalCost += cost;
 
-    // Insert the merged rope back into the min-heap
-    minHeap.insert(cost);
+    // Enqueue the connected rope back into the queue.
+    priorityQueue.enqueue(cost);
   }
 
-  // Display the minimum cost in the result element
-  resultElement.innerHTML = totalCost;
+  // Return the total cost.
+  return totalCost;
 }
 
-// MinHeap class to maintain the minimum element efficiently
-class MinHeap {
+// A priority queue implementation.
+class PriorityQueue {
   constructor() {
-    this.heap = [];
+    this.queue = [];
   }
 
-  size() {
-    return this.heap.length;
+  enqueue(element) {
+    this.queue.push(element);
+    this.heapifyUp(this.queue.length - 1);
   }
 
-  insert(value) {
-    this.heap.push(value);
-    this.heapifyUp();
-  }
-
-  extractMin() {
-    if (this.size() === 0) return null;
-
-    if (this.size() === 1) return this.heap.pop();
-
-    const min = this.heap[0];
-    this.heap[0] = this.heap.pop();
-    this.heapifyDown();
+  dequeue() {
+    const min = this.queue[0];
+    this.queue[0] = this.queue[this.queue.length - 1];
+    this.queue.pop();
+    this.heapifyDown(0);
     return min;
   }
 
-  heapifyUp() {
-    let currentIndex = this.size() - 1;
-    while (currentIndex > 0) {
-      const parentIndex = Math.floor((currentIndex - 1) / 2);
-      if (this.heap[currentIndex] < this.heap[parentIndex]) {
-        [this.heap[currentIndex], this.heap[parentIndex]] = [
-          this.heap[parentIndex],
-          this.heap[currentIndex],
-        ];
-        currentIndex = parentIndex;
-      } else {
-        break;
-      }
+  size() {
+    return this.queue.length;
+  }
+
+  heapifyUp(index) {
+    const parentIndex = Math.floor((index - 1) / 2);
+    if (parentIndex >= 0 && this.queue[index] < this.queue[parentIndex]) {
+      [this.queue[index], this.queue[parentIndex]] = [this.queue[parentIndex], this.queue[index]];
+      this.heapifyUp(parentIndex);
     }
   }
 
-  heapifyDown() {
-    let currentIndex = 0;
-    while (true) {
-      const leftChildIndex = 2 * currentIndex + 1;
-      const rightChildIndex = 2 * currentIndex + 2;
-      let smallestIndex = currentIndex;
+  heapifyDown(index) {
+    const leftChildIndex = 2 * index + 1;
+    const rightChildIndex = 2 * index + 2;
 
-      if (
-        leftChildIndex < this.size() &&
-        this.heap[leftChildIndex] < this.heap[smallestIndex]
-      ) {
-        smallestIndex = leftChildIndex;
-      }
+    let smallestChildIndex = index;
+    if (leftChildIndex < this.queue.length && this.queue[leftChildIndex] < this.queue[smallestChildIndex]) {
+      smallestChildIndex = leftChildIndex;
+    }
+    if (rightChildIndex < this.queue.length && this.queue[rightChildIndex] < this.queue[smallestChildIndex]) {
+      smallestChildIndex = rightChildIndex;
+    }
 
-      if (
-        rightChildIndex < this.size() &&
-        this.heap[rightChildIndex] < this.heap[smallestIndex]
-      ) {
-        smallestIndex = rightChildIndex;
-      }
-
-      if (currentIndex === smallestIndex) {
-        break;
-      }
-
-      [this.heap[currentIndex], this.heap[smallestIndex]] = [
-        this.heap[smallestIndex],
-        this.heap[currentIndex],
-      ];
-
-      currentIndex = smallestIndex;
+    if (smallestChildIndex !== index) {
+      [this.queue[index], this.queue[smallestChildIndex]] = [this.queue[smallestChildIndex], this.queue[index]];
+      this.heapifyDown(smallestChildIndex);
     }
   }
 }
+
+// Get the comma-separated integers from the input element.
+const ropes = document.getElementById('input').value.split(',');
+
+// Convert the strings to integers.
+for (let i = 0; i < ropes.length; i++) {
+  ropes[i] = parseInt(ropes[i]);
+}
+
+// Calculate the minimum cost of ropes.
+const totalCost = connectRopes(ropes);
+
+// Display the total cost in the result element.
+document.getElementById('result').innerHTML = totalCost;
